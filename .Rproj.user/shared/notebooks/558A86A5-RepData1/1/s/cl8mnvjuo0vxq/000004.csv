@@ -1,0 +1,3 @@
+"0","dAta$date <- as.Date(dAta$date)"
+"0","dAta$day <- weekdays(dAta$date)"
+"0","dAta$indicate_day <- as.factor(ifelse(dAta$day == ""Saturday"" | dAta$day == ""Sunday"", ""weekend"", ""weekday""))"

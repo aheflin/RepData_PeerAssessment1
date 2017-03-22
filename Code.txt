@@ -1,0 +1,60 @@
+activity <- read.csv(file="activity.csv")
+summary(activity)
+
+activity$day <- weekdays(as.Date(activity$date))
+activity$DateTime<- as.POSIXct(activity$date, format="%Y-%m-%d")
+totalStepsdays <- aggregate(steps ~ date, activity,  FUN = sum)
+clean <- activity[!is.na(activity$steps),]
+
+sumTable <- aggregate(activity$steps ~ activity$date, FUN=sum, )
+colnames(sumTable)<- c("Date", "Steps")
+
+hist(sumTable$Steps, breaks=5, xlab="Steps", main = "Total Steps per Day")
+
+as.integer(mean(sumTable$Steps))
+as.integer(median(sumTable$Steps))
+
+library(plyr)
+library(ggplot2)
+clean <- activity[!is.na(activity$steps),]
+
+intervalTable <- ddply(clean, .(interval), summarize, Avg = mean(steps))
+
+p <- ggplot(intervalTable, aes(x=interval, y=Avg), xlab = "Interval", ylab="Average Number of Steps")
+p + geom_line()+xlab("Interval")+ylab("Average Number of Steps")+ggtitle("Average Number of Steps per Interval")
+
+maxSteps <- max(intervalTable$Avg)
+intervalTable[intervalTable$Avg==maxSteps,1]
+
+nrow(activity[is.na(activity$steps),])
+
+avgTable <- ddply(clean, .(interval, date), summarize, Avg = mean(steps))
+nadata <- activity[is.na(activity$steps),]
+newdata <- merge(nadata, activity, by="interval", "date")
+
+activity2 <- subset(activity, !is.na(activity$steps))
+dAta <- activity
+imPact <- is.na(dAta$steps)
+tAvg <- tapply(activity2$steps, activity2$interval, mean, na.rm = TRUE, simplify = T)
+dAta$steps[imPact] <- tAvg[as.character(dAta$interval[imPact])]
+
+totalStepsperday2 <- aggregate(steps ~ date, dAta, FUN = sum)
+par(mar = c(5,8,3,1))
+
+hist(totalStepsperday2$steps, breaks = 10, col = "pink", xlab = "Daily Steps", main = "Total Steps In A Day")
+hist(totalStepsdays$steps, breaks = 10, col = "red", xlab = "Daily Steps", main = "Total Steps In A Day", add=T) 
+legend("topleft", c("Imputed", "NA"), fill = c("pink","red"))
+
+mean(totalStepsdays$steps)
+mean(totalStepsperday2$steps)
+median(totalStepsdays$steps)
+median(totalStepsperday2$steps)
+
+dAta$DayCategory <- ifelse(dAta$day %in% c("Saturday", "Sunday"), "Weekend", "Weekday")
+
+library(lattice)
+intervalTable2 <- ddply(dAta, .(interval, DayCategory), summarize, Avg = mean(steps))
+xyplot(interval ~ steps|DayCategory, data=dAta, type="l",  layout = c(1,2),
+       main="Average Steps per Interval Based on Type of Day", 
+       ylab="Average Number of Steps", xlab="Interval")
+
